@@ -1,1 +1,5 @@
+## Copy the following lines of Codes then create New SQL report in Reports > Guided Reports > Create from SQL
+
 SELECT date(action_logs.timestamp), action_logs.user, action_logs.action, action_logs.info, (select COUNT(action) from action_logs where info="biblio" or info="item") as total, concat(borrowers.firstname,' ', borrowers.surname, "(",action_logs.user,")") as Name from action_logs left join borrowers on action_logs.user=borrowers.borrowernumber where action_logs.action="add" and (action_logs.info="biblio" or action_logs.info="item")
+
+
