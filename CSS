@@ -1,0 +1,42 @@
+## CSS Codes. Add the following codes in Koha Administration > Global System Preferences > Staff Clients > intranetusercss
+
+
+#plugin_content{
+background-color:rgb(243, 243, 243);
+border:1px solid rgb(83, 130, 0);
+
+}
+:required {
+
+ }
+
+.sub_area{
+
+}
+.sub_area_header{
+color:green;
+font-size:16px;
+font-color:green;
+border-bottom:1px solid grey;
+}
+.sub_area_content{
+padding-top:3px;
+font-size:14px;
+
+}
+.sub_area label{
+font-size:14px;
+min-width:80px;
+display:inline-block;
+overflow:hidden;
+}
+.sub_area input{
+font-size:12px;
+width:120px;
+padding:2px;
+}
+
+.sub_area p{
+color:rgb(0, 77, 153);
+}
+
