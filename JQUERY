@@ -1,0 +1,216 @@
+$(document).ready(function() {
+ //jquery
+ $(location).attr('href');
+
+ 
+ var pathname = window.location.pathname;
+
+ if (window.location.href.indexOf('cgi-bin/koha/tools/viewlog.pl') >= 0) {
+
+  $('h1:contains("Browse system logs")').append('<button style="background-color:rgb(230, 240, 242);border-bottom:2px solid rgb(230, 240, 242);margin-left:20px;" class="button" id="d_e_p"> Selective Logs (Plugin)</button>');
+ }
+
+ $("#d_e_p").one('click', function() {
+
+
+ var reporturl= prompt("Enter report number");
+function isUrlValid(url) {return /^\d+$/i.test(url);}
+
+
+if (isUrlValid(reporturl)) {
+//
+var rnumber= reporturl;
+var reporturlc=window.location.href;
+var reporturl1=reporturlc.indexOf('/cgi-bin/koha');
+var reporturlf=reporturlc.substring(0,reporturl1);
+var reporturln= (reporturlf+'/cgi-bin/koha/reports/guided_reports.pl?reports='+rnumber+'&phase=Run this report');
+
+//
+
+
+
+  $("#close_plugin_content").click(function() {
+   $("#plugin_content").remove();
+  });
+
+  $('#d_e_p').after('<div id="plugin_content"><fieldset><legend>Selective Logs</legend><div style="float:left;padding-left:10px;" class="sub_area"><p class="sub_area_header">Patrons Name</p><div id="patron_name" class="sub_area_content"></div><input type="checkbox" id="all_patron"/><label for="all_patron" style="color:grey;">Select All Patrons</label></div><div class="sub_area" style="float:left;padding-left:20px;"><p class="sub_area_header">Date Range</p><label for="no_date_range" style="color:grey;">No Date Range:</label><input type="checkbox" id="no_date_range"/><br/><span id="date_range_span"><label>From: </label><input type="textbox" id="date1" placeholder="yy-mm-dd" required pattern="[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])"/><br/> <label>To: </label><input type="textbox" id="date2" placeholder="yy-mm-dd"required pattern="[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])"/></span></div><div class="sub_area" style="padding-left:20px;float:left;"><p class="sub_area_header">Add Information</p><label>Biblio</label><input type="checkbox" id="biblio"/><br/><label>Item</label><input type="checkbox" id="item"/></div><div class="sub_area" style="float:left;padding-left:20px;"><p class="sub_area_header">Salary Per Add</p><label>Biblio: </label> <input type="textbox" id="sal_biblio" value="0"/><br/> <label>Item: </label> <input type="textbox" id="sal_item" value="0"/></div><div style="clear:both;"></div><hr><p align="center"><button id="submitn" class="btn btn-small" style="font-size:16px;font-weight:bold;"><i class="icon-search"></i> Search</button><div id="get_result" align="center"><table border="1" hidden id="result_table"><tr><th>Name</th><th>Total Biblio</th><th>Total Items</th><th>Total Salary</th></tr><tbody id="table_body"><tr><td style="color:grey;" align="center" colspan="4">No record searched</td></tr></tbody></table></fieldset></div>');
+
+//
+var limit=[];
+
+ var step1=$.ajax({
+   url: reporturln,
+   type: 'GET',
+   success: function(data1) {
+
+    var myTableArray1 = [];
+
+    $(data1).find("table tbody tr").each(function() {
+     var arrayOfThisRow1 = [];
+     var tableData1 = $(this).find('td');
+     if (tableData1.length > 0) {
+      tableData1.each(function() {
+       arrayOfThisRow1.push($(this).text());
+      });
+      myTableArray1.push(arrayOfThisRow1);
+
+
+     }
+    }); 
+limit.push(myTableArray1[0][4]);
+
+
+
+}
+});
+var reporturlload_logo=reporturlf+"/intranet-tmpl/prog/img/loading.gif";
+$('#submitn').before('<div class="modal" id="loading_report" style="border:2px solid green;height:auto;padding:10px;">Loading data...<br/><img src="'+reporturlload_logo+'" /></div>');
+var reporturl_final;
+
+$.when(step1).done(function(){
+ reporturl_final=reporturln+'&limit='+limit;
+
+
+
+
+
+
+//
+  $.ajax({
+   url: reporturl_final,
+   type: 'GET',
+   success: function(data) {
+
+    var myTableArray = [];
+
+    $(data).find("table tbody tr").each(function() {
+     var arrayOfThisRow = [];
+     var tableData = $(this).find('td');
+     if (tableData.length > 0) {
+      tableData.each(function() {
+       arrayOfThisRow.push($(this).text());
+      });
+      myTableArray.push(arrayOfThisRow);
+     }
+    });
+
+  
+
+
+    //Geting patron names
+    var patronArray = myTableArray.map(function(value, index) {
+     return value[5]
+    });
+    var patronUnique = patronArray.filter(function(item, i, a) {
+     return i == patronArray.indexOf(item);
+    });
+
+    var i;
+    for (i = 0; i < patronUnique.length; i++) {
+
+     $('#patron_name')
+      .append(
+       $(document.createElement('input')).attr({
+        id: patronUnique[i],
+        name: patronUnique[i],
+        value: patronUnique[i],
+        type: 'checkbox'
+       })
+      ).append('<label>' + patronUnique[i] + '</label><br/>');
+    }
+    //end-getting patron names
+    $('#no_date_range').click(function() {
+     $("#date_range_span").toggle(100);
+    });
+
+    //retrieving result
+    $('#submitn').click(function() {
+     $('#table_body tr').remove();
+     $('#result_table').show();
+
+     $('div#patron_name input[type=checkbox]').each(function() {
+      if ($(this).is(":checked")) {
+       var singleName = $(this).attr('name');
+       //
+       var biblio = 0,
+        item = 0;
+       $.each(myTableArray, function(index, value) {
+        if ($('#no_date_range').is(":checked")) {
+
+         if (value[5] == singleName) {
+
+          if ($('#biblio').is(":checked")) {
+           if (value[3] == 'biblio') {
+
+            biblio++;
+
+           }
+          }
+          if ($('#item').is(":checked")) {
+           if (value[3] == 'item') {
+
+            item++;
+
+           }
+          }
+
+         }
+
+        } else if (value[0] >= $('#date1').val() && value[0] <= $('#date2').val()) {
+
+         if (value[5] == singleName) {
+
+          if ($('#biblio').is(":checked")) {
+           if (value[3] == 'biblio') {
+
+            biblio++;
+
+           }
+          }
+          if ($('#item').is(":checked")) {
+           if (value[3] == 'item') {
+
+            item++;
+
+           }
+          }
+
+         }
+
+        }
+       });
+
+       $('#table_body').append('<tr><td>' + singleName + '<td>' + biblio + '<td>' + item + '<td id="count_sal">' + (biblio * $('#sal_biblio').val() + item * $('#sal_item').val()) + '</td></tr>');
+       //
+
+
+
+      }
+     });
+    });
+    // end-retrieving result
+    //Select all patrons
+    $("#all_patron").change(function() {
+     $("#patron_name input[type=checkbox]").prop('checked', $(this).prop("checked"));
+    });
+    //
+$('#loading_report').remove();
+    //
+   }
+  });
+
+});
+  $("#plugin_content").before(' <a align="Center" id="close_plugin_content" href="" style="font-size:14px;color:red;">[Close]</a>');
+
+}
+else if (reporturl=='') { alert("No Url Found");
+location.reload();}
+
+
+else if (reporturl==null) { location.reload();}
+else if (!(isUrlValid(reporturl))) { alert('Enter correct URL'); location.reload();}
+else { location.reload(); }
+  //
+ });
+
+});
